@@ -1,0 +1,140 @@
+﻿@model IEnumerable<MVC.Models.Products>
+
+@{
+    ViewData["Title"] = "商品";
+}
+<div id="appVue" class="container" />
+
+
+<div class="container">
+    <a class="btn btn-primary" style="margin:0" asp-area=""
+       asp-controller="Products" asp-action="Create">新增記錄</a>
+    <div class="row">
+        <div class="col-12 mt-4">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">商品編號</th>
+                        <th scope="col">商品名稱</th>
+                        <th scope="col">種類</th>
+                        <th scope="col">商品說明</th>
+                        <th scope="col">價格</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in Products">
+                        <template v-if="item.Edit==true">
+                            <td scope="row">{{item.ProductID}}</td>
+                            <td scope="row"><input v-model="item.ProductID" /></td>
+                            <td scope="row"><input v-model="item.ProductName" /></td>
+                            <td scope="row"><input v-model="item.CategoryID" /></td>
+                            <td scope="row"><input v-model="item.Description" /></td>
+                            <td scope="row"><input v-model="item.UnitPrice" /></td>
+                            <td>
+                                <button type="button" class="btn btn-primary" @@click="updateProducts(item)">確定</button>
+                                <button type="button" class="btn btn-danger" @@click="cancel">取消</button>
+                            </td>
+                        </template>
+                        <template v-else>
+                            <td scope="row">{{item.ProductID}}</td>
+                            <td scope="row">{{item.ProductName}}</td>
+                            <td scope="row">{{item.CategoryID}}</td>
+                            <td scope="row">{{item.Description}}</td>
+                            <td scope="row">{{item.UnitPrice}}</td>
+                            <td>
+                                <button type="button" class="btn btn-success" @@click="editProducts(item.productId)">編輯</button>
+                                <button type="button" class="btn btn-danger" @@click="deleteProducts(item.productId)">刪除</button>
+                            </td>
+                        </template>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+    var appVue = new Vue({
+        el: "#appVue",
+        name: "appVue",
+        data: {            
+            Products: [],
+        },
+        mounted: function () {
+            let _this = this;
+            _this.getProducts();
+        },
+        methods: {
+            getProducts: function () {
+                let _this = this;
+                axios.get(window.location.origin + "/Products/List").then(response => {
+                    _this.Products = response.data;
+                    var ProductsList = [];
+                    for (var x = 0; x <= _this.Products.length - 1; x++) {
+                        var item = {};
+                        item = _this.Products[x];
+                        item.Edit = false;
+                        ProductsList.push(item);
+                    }
+                    _this.Products = ProductsList;
+                });
+
+            },            
+            updateProducts: function (item) {
+                let _this = this;
+                var request = {};
+                request.productId = parseInt(item.productId);
+                request.description = item.description;
+                request.quantity = parseInt(item.quantity);
+                request.unitPrice = parseFloat(item.unitPrice);
+                request.active = item.active;
+                axios.put(window.location.origin + "/Products/Edit", request).then(response => {
+                    alert(response.data);
+                    _this.postFilterProducts();
+                    getProducts();
+                    _this.cancel()
+                });
+            },
+            deleteProducts: function (Codi_Producto) {
+                let _this = this;
+                axios.delete(window.location.origin + "/Products/Delete/" + Codi_Producto).then(response => {
+                    alert(response.data);
+                    _this.getProducts();
+                });
+            },
+            editProducts: function (productid) {
+                let _this = this;
+                var ProductsList = [];
+                for (var x = 0; x <= _this.Products.length - 1; x++) {
+                    var item = {};
+                    item = _this.Products[x];
+                    if (productid == _this.Products[x].productId) {
+                        item.Edit = true;
+                    } else {
+                        item.Edit = false;
+                    }
+                    ProductsList.push(item);
+                }
+
+                _this.Products = ProductsList;
+            },
+            cancel: function () {
+                let _this = this;
+                var ProductsList = [];
+                for (var x = 0; x <= _this.Products.length - 1; x++) {
+                    var item = {};
+                    item = _this.Products[x];
+                    item.Edit = false;
+
+                    ProductsList.push(item);
+                }
+
+                _this.Products = ProductsList;
+            }
+        }
+    });
+    </script>
+}
